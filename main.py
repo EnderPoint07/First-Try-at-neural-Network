@@ -1,5 +1,16 @@
+import logging
+from logging.handlers import MemoryHandler, RotatingFileHandler
+
 import numpy as np
 from PIL import Image
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+log_file = 'logs/log.txt'
+max_log_size = 1024 * 1024 * 50  # 50 MB
+file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=1)
+memory_handler = MemoryHandler(1024 * 5, flushLevel=logging.ERROR, target=file_handler)
+logging.getLogger().addHandler(memory_handler)
 
 np.random.seed(42)
 
@@ -29,14 +40,20 @@ def main():
     # Initialized Weights and biases for the layers
     weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
     biases_input_hidden = np.random.randn(hidden_size) * 0.01
+    logging.debug(f"Initial weights_input_hidden: {weights_input_hidden}")
+    logging.debug(f"Initial biases_input_hidden: {biases_input_hidden}")
 
     weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
     biases_hidden_output = np.random.randn(output_size) * 0.01  # end weights and biases
+    logging.debug(f"Initial weights_hidden_output: {weights_hidden_output}")
+    logging.debug(f"Initial biases_hidden_output: {biases_hidden_output}")
 
     num_epochs = 10
-    learning_rate = 0.0001
+    learning_rate = 0.0003
     for epoch in range(num_epochs):
         total_loss = 0
+        logging.debug(f"Epoch: {epoch + 1}, Learning rate: {learning_rate}")
+
         for image, label in zip(train_images, train_labels):
             # Make -> forward propagate -> output
             input_layer = np.array(image)
@@ -55,6 +72,12 @@ def main():
             expected_output[label - 1] = 1  # Set the target class index to 1
             error_output = output_layer - expected_output  # Calculate the error in the output layer
 
+            # For debug purposes
+            # old_weights_hidden_output = weights_hidden_output
+            # old_biases_hidden_output = biases_hidden_output
+            # old_weights_input_hidden = weights_input_hidden
+            # old_biases_input_hidden = biases_input_hidden
+
             # Calculate the gradients of the weights and biases of the hidden - output layer
             grad_weights_hidden_output, grad_biases_hidden_output = calculate_gradients(hidden_layer,
                                                                                         biases_hidden_output,
@@ -70,6 +93,33 @@ def main():
             biases_hidden_output -= learning_rate * grad_biases_hidden_output  # Update biases in the output layer
             weights_input_hidden -= learning_rate * grad_weights_input_hidden  # Update weights between input and hidden layers
             biases_input_hidden -= learning_rate * grad_biases_input_hidden  # Update biases in the hidden layer
+
+            if epoch == -500:  # Specify the epochs you want to log
+                logging.debug(f"Epoch: {epoch + 1}")
+
+                logging.debug(f"Input layer: {input_layer}")
+                logging.debug(f"Hidden layer: {hidden_layer}")
+                logging.debug(f"Output layer: {output_layer}")
+
+                logging.debug(f"Prediction: {prediction}")
+                logging.debug(f"Loss: {loss}")
+
+                # logging.debug(f"Old weights_input_hidden: {old_weights_input_hidden}")
+                # logging.debug(f"Old biases_input_hidden: {old_biases_input_hidden}")
+                # logging.debug(f"Old weights_hidden_output: {old_weights_hidden_output}")
+                # logging.debug(f"Old biases_hidden_output: {old_biases_hidden_output}")
+
+                logging.debug(f"Biases Gradient hidden-output: {grad_biases_hidden_output}")
+                logging.debug(f"weights Gradient hidden-output: {grad_weights_hidden_output}")
+                logging.debug(f"Biases Gradient input-hidden: {grad_biases_hidden_output}")
+                logging.debug(f"Weights Gradient input-hidden: {grad_weights_hidden_output}")
+
+                logging.debug(f"Updated weights_input_hidden: {weights_input_hidden}")
+                logging.debug(f"Updated biases_input_hidden: {biases_input_hidden}")
+                logging.debug(f"Updated weights_hidden_output: {weights_hidden_output}")
+                logging.debug(f"Updated biases_hidden_output: {biases_hidden_output}")
+
+                logging.debug("-" * 100)
 
             # print(f"{epoch}:{i} {output_layer}\n {expected_output}\n {prediction}\n{label}\n {loss}\n\n")
 
