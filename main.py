@@ -60,23 +60,21 @@ def main():
             hidden_layer = forward_propagate(input_layer, weights_input_hidden, biases_input_hidden)
             output_layer = forward_propagate(hidden_layer, weights_hidden_output, biases_hidden_output)
 
-            # it's the index of the element with the highest confidence (value)
-            prediction = np.argmax(output_layer) + 1  # +1 cause that is the index not the actual number
+            expected_output = np.zeros_like(output_layer)
+            expected_output[label] = 1  # Set the target class index to 1
+            error_output = output_layer - expected_output  # Calculate the error in the output layer
 
             # Calculate how wrong its ass was in predicting the label
-            loss = compute_loss(prediction, label)
+            loss = compute_loss(output_layer, expected_output)
             total_loss += loss
-
-            # Backward propagate the error
-            expected_output = np.zeros_like(output_layer)
-            expected_output[label + 1] = 1  # Set the target class index to 1
-            error_output = output_layer - expected_output  # Calculate the error in the output layer
 
             # For debug purposes
             # old_weights_hidden_output = weights_hidden_output
             # old_biases_hidden_output = biases_hidden_output
             # old_weights_input_hidden = weights_input_hidden
             # old_biases_input_hidden = biases_input_hidden
+
+            # Backward propagate the error
 
             # Calculate the gradients of the weights and biases of the hidden - output layer
             grad_weights_hidden_output, grad_biases_hidden_output = calculate_gradients(hidden_layer,
@@ -101,7 +99,7 @@ def main():
                 logging.debug(f"Hidden layer: {hidden_layer}")
                 logging.debug(f"Output layer: {output_layer}")
 
-                logging.debug(f"Prediction: {prediction}")
+                logging.debug(f"Prediction: {np.argmax(output_layer)}")
                 logging.debug(f"Loss: {loss}")
 
                 # logging.debug(f"Old weights_input_hidden: {old_weights_input_hidden}")
@@ -148,12 +146,6 @@ def calculate_accuracy(predictions, labels):
     return accuracy
 
 
-def softmax(x):  # Magic code again
-    e_x = np.exp(x - np.max(x))  # Subtract max value from it to avoid overflow
-    norm_x = e_x / np.sum(e_x)
-    return norm_x
-
-
 def calculate_gradients(in_layer, in_biases, error):
     # Backward propagate the error (all of this is magic i have no idea whats going on)
 
@@ -163,8 +155,8 @@ def calculate_gradients(in_layer, in_biases, error):
     return grad_weights, grad_biases
 
 
-def compute_loss(prediction, reality):
-    loss = np.mean((prediction - reality) ** 2)  # magic calculation (MSE)
+def compute_loss(output, expected):
+    loss = 1 / len(output) * np.sum((output - expected) ** 2)  # magic calculation (MSE)
     return loss
 
 
@@ -189,13 +181,9 @@ def relu_derivative(inputs):  # Derivative of ReLU activation function i.e. 1 if
 def activation(w_inputs):
     activated = np.empty_like(w_inputs)  # create another array with same shape as w_input
 
-    for i, w_input in enumerate(w_inputs):  # Perform RelU on each element
-        if w_input <= 0:
-            activated[i] = 0
-        else:
-            activated[i] = w_input
+    activated = 1 / (1 + np.exp(-w_inputs))  # Perform sigmoid function on each input
 
-    return softmax(activated)  # normalize the value
+    return activated  # normalize the value
 
 
 def resize_images(images, new_size):  # magic again
