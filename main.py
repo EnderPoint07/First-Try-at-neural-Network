@@ -69,7 +69,7 @@ def main():
 
             # Backward propagate the error
             expected_output = np.zeros_like(output_layer)
-            expected_output[label - 1] = 1  # Set the target class index to 1
+            expected_output[label + 1] = 1  # Set the target class index to 1
             error_output = output_layer - expected_output  # Calculate the error in the output layer
 
             # For debug purposes
