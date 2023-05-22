@@ -1,6 +1,8 @@
 import numpy as np
 from PIL import Image
 
+np.random.seed(42)
+
 
 def main():
     # Read training images
