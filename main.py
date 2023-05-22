@@ -24,25 +24,91 @@ def main():
     hidden_size = 128
     output_size = 10
 
-    # Weights and biases for the layers
-    weights_input_hidden = np.random.randn(input_size, hidden_size) * 0.01
-    biases_input_hidden = np.zeros(hidden_size)
+    # Initialized Weights and biases for the layers
+    weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
+    biases_input_hidden = np.zeros(hidden_size) * 0.01
 
-    weights_hidden_output = np.random.randn(hidden_size, output_size) * 0.01
-    biases_hidden_output = np.zeros(output_size)  # end weights and biases
+    weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
+    biases_hidden_output = np.zeros(output_size) * 0.01  # end weights and biases
 
-    # Make -> forward propagate -> output (done using  my proud function process_layer())
-    input_layer = train_images[0]
-    hidden_layer = forward_propagate(input_layer, weights_input_hidden, biases_input_hidden)
-    output_layer = forward_propagate(hidden_layer, weights_hidden_output, biases_hidden_output)
+    num_epochs = 10
+    learning_rate = 0.0001
+    for epoch in range(num_epochs):
+        total_loss = 0
+        for image, label in zip(train_images, train_labels):
+            # Make -> forward propagate -> output
+            input_layer = np.array(image)
+            hidden_layer = forward_propagate(input_layer, weights_input_hidden, biases_input_hidden)
+            output_layer = forward_propagate(hidden_layer, weights_hidden_output, biases_hidden_output)
 
-    # it's the index of the element with the highest confidence (value)
-    prediction = np.argmax(output_layer) + 1  # +1 cause that is the index not the actual number
+            # it's the index of the element with the highest confidence (value)
+            prediction = np.argmax(output_layer) + 1  # +1 cause that is the index not the actual number
 
-    # Calculate how wrong its ass was in predicting the label
-    loss = compute_loss(prediction, train_labels[0])
+            # Calculate how wrong its ass was in predicting the label
+            loss = compute_loss(prediction, label)
+            total_loss += loss
 
-    print(f"{output_layer}\n {prediction}\n {train_labels[0]}\n {loss}")
+            # Backward propagate the error
+            expected_output = np.zeros_like(output_layer)
+            expected_output[label - 1] = 1  # Set the target class index to 1
+            error_output = output_layer - expected_output  # Calculate the error in the output layer
+
+            # Calculate the gradients of the weights and biases of the hidden - output layer
+            grad_weights_hidden_output, grad_biases_hidden_output = calculate_gradients(hidden_layer,
+                                                                                        biases_hidden_output,
+                                                                                        error_output)
+
+            # calculate the gradients for the input-to-hidden layer, propagating the error (d_output) from the output layer
+            # back to the hidden layer
+            error_hidden = np.dot(error_output, weights_hidden_output.T)
+            grad_weights_input_hidden, grad_biases_input_hidden = calculate_gradients(input_layer, biases_input_hidden,
+                                                                                      error_hidden)
+
+            weights_hidden_output -= learning_rate * grad_weights_hidden_output  # Update weights between hidden and output layers
+            biases_hidden_output -= learning_rate * grad_biases_hidden_output  # Update biases in the output layer
+            weights_input_hidden -= learning_rate * grad_weights_input_hidden  # Update weights between input and hidden layers
+            biases_input_hidden -= learning_rate * grad_biases_input_hidden  # Update biases in the hidden layer
+
+            # print(f"{epoch}:{i} {output_layer}\n {expected_output}\n {prediction}\n{label}\n {loss}\n\n")
+
+        average_loss = total_loss / len(train_labels)
+
+        # Test on testing set
+        test_predictions = []
+        for image in test_images:
+            input_layer = image
+            hidden_layer = forward_propagate(input_layer, weights_input_hidden, biases_input_hidden)
+            output_layer = forward_propagate(hidden_layer, weights_hidden_output, biases_hidden_output)
+
+            # it's the index of the element with the highest confidence (value)
+            test_predictions.append(np.argmax(output_layer) + 1)  # +1 cause that is the index not the actual number
+
+        accuracy = calculate_accuracy(test_predictions, test_labels)
+        print(f"{epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
+    print(f"Input-Hidden Weights {weights_input_hidden}\n Hidden-Output Weights {weights_hidden_output}\n"
+          f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
+
+
+def calculate_accuracy(predictions, labels):
+    correct = np.sum(predictions == labels)  # Count the number of correct predictions
+    total = len(predictions)  # Total number of predictions
+    accuracy = correct / total * 100.0  # Calculate the accuracy as a percentage
+    return accuracy
+
+
+def softmax(x):  # Magic code again
+    e_x = np.exp(x - np.max(x))  # Subtract max value from it to avoid overflow
+    norm_x = e_x / np.sum(e_x)
+    return norm_x
+
+
+def calculate_gradients(in_layer, in_biases, error):
+    # Backward propagate the error (all of this is magic i have no idea whats going on)
+
+    grad_weights = np.outer(in_layer, error)  # Gradient of weights between hidden and output layers
+    grad_biases = np.dot(in_biases, error)  # Gradient of biases in the output layer
+
+    return grad_weights, grad_biases
 
 
 def compute_loss(prediction, reality):
@@ -57,6 +123,17 @@ def forward_propagate(in_layer, weights, biases):
     return activation(weighted_input)  # pass it thru the activation function (RelU) to get the output of this layer
 
 
+def relu_derivative(inputs):  # Derivative of ReLU activation function i.e. 1 if input > 0 else 0
+    result = np.zeros_like(inputs)
+    for i, inp in enumerate(inputs):
+        if inp >= 0:
+            result[i] = 1
+        else:
+            result[i] = 1
+
+    return inputs
+
+
 def activation(w_inputs):
     activated = np.empty_like(w_inputs)  # create another array with same shape as w_input
 
@@ -66,7 +143,7 @@ def activation(w_inputs):
         else:
             activated[i] = w_input
 
-    return activated
+    return softmax(activated)  # normalize the value
 
 
 def resize_images(images, new_size):  # magic again
