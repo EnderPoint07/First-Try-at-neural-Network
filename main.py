@@ -26,10 +26,10 @@ def main():
 
     # Initialized Weights and biases for the layers
     weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
-    biases_input_hidden = np.zeros(hidden_size) * 0.01
+    biases_input_hidden = np.random.randn(hidden_size) * 0.01
 
     weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
-    biases_hidden_output = np.zeros(output_size) * 0.01  # end weights and biases
+    biases_hidden_output = np.random.randn(output_size) * 0.01  # end weights and biases
 
     num_epochs = 10
     learning_rate = 0.0001
@@ -129,7 +129,7 @@ def relu_derivative(inputs):  # Derivative of ReLU activation function i.e. 1 if
         if inp >= 0:
             result[i] = 1
         else:
-            result[i] = 1
+            result[i] = 0
 
     return inputs
 
