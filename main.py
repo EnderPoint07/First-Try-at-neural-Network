@@ -62,7 +62,6 @@ def main():
 
             expected_output = np.zeros_like(output_layer)
             expected_output[label] = 1  # Set the target class index to 1
-            error_output = output_layer - expected_output  # Calculate the error in the output layer
 
             # Calculate how wrong its ass was in predicting the label
             loss = compute_loss(output_layer, expected_output)
@@ -75,6 +74,7 @@ def main():
             # old_biases_input_hidden = biases_input_hidden
 
             # Backward propagate the error
+            error_output = output_layer - expected_output  # Calculate the error in the output layer
 
             # Calculate the gradients of the weights and biases of the hidden - output layer
             grad_weights_hidden_output, grad_biases_hidden_output = calculate_gradients(hidden_layer,
@@ -83,7 +83,8 @@ def main():
 
             # calculate the gradients for the input-to-hidden layer, propagating the error (d_output) from the output layer
             # back to the hidden layer
-            error_hidden = np.dot(error_output, weights_hidden_output.T)
+            error_hidden = np.dot(error_output, weights_hidden_output.T) * sigmoid_derv(hidden_layer)  # the error in
+            # the hidden layer
             grad_weights_input_hidden, grad_biases_input_hidden = calculate_gradients(input_layer, biases_input_hidden,
                                                                                       error_hidden)
 
@@ -139,6 +140,10 @@ def main():
           f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
 
 
+def sigmoid_derv(in_layer):
+    return in_layer * (1 - in_layer)
+
+
 def calculate_accuracy(predictions, labels):
     correct = np.sum(predictions == labels)  # Count the number of correct predictions
     total = len(predictions)  # Total number of predictions
@@ -148,8 +153,7 @@ def calculate_accuracy(predictions, labels):
 
 def calculate_gradients(in_layer, in_biases, error):
     # Backward propagate the error (all of this is magic i have no idea whats going on)
-
-    grad_weights = np.outer(in_layer, error)  # Gradient of weights between hidden and output layers
+    grad_weights = np.dot(in_layer, error)  # Gradient of weights between hidden and output layers
     grad_biases = np.dot(in_biases, error)  # Gradient of biases in the output layer
 
     return grad_weights, grad_biases
