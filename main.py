@@ -129,11 +129,11 @@ def main():
             output_layer = forward_propagate(hidden_layer, weights_hidden_output, biases_hidden_output)
 
             # it's the index of the element with the highest confidence (value)
-            test_predictions.append(np.argmax(output_layer) + 1)  # +1 cause that is the index not the actual number
+            test_predictions.append(np.argmax(output_layer))
 
         accuracy = calculate_accuracy(test_predictions, test_labels)
 
-        logging.info(f"{epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
+        logging.info(f"Epoch: {epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
 
     logging.info(f"Input-Hidden Weights {weights_input_hidden}\n Hidden-Output Weights {weights_hidden_output}\n"
                  f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
