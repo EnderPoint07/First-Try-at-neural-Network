@@ -48,8 +48,8 @@ def main():
     logging.debug(f"Initial weights_hidden_output: {weights_hidden_output}")
     logging.debug(f"Initial biases_hidden_output: {biases_hidden_output}")
 
-    num_epochs = 10
-    learning_rate = 0.0003
+    num_epochs = 20
+    learning_rate = 0.0005
     for epoch in range(num_epochs):
         i = 0
         total_loss = 0
@@ -186,6 +186,7 @@ def relu_derivative(inputs):  # Derivative of ReLU activation function i.e. 1 if
 def activation(w_inputs):
     activated = np.empty_like(w_inputs)  # create another array with same shape as w_input
 
+    w_inputs = np.clip(w_inputs, -709.78, 709.78)  # Clip the values so it doesnt overflow
     activated = 1 / (1 + np.exp(-w_inputs))  # Perform sigmoid function on each input
 
     return activated  # normalize the value
