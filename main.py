@@ -51,8 +51,8 @@ def main():
     num_epochs = 10
     learning_rate = 0.0003
     for epoch in range(num_epochs):
+        i = 0
         total_loss = 0
-        logging.debug(f"Epoch: {epoch + 1}, Learning rate: {learning_rate}")
 
         for image, label in zip(train_images, train_labels):
             # Make -> forward propagate -> output
@@ -77,24 +77,23 @@ def main():
             error_output = output_layer - expected_output  # Calculate the error in the output layer
 
             # Calculate the gradients of the weights and biases of the hidden - output layer
-            grad_weights_hidden_output, grad_biases_hidden_output = calculate_gradients(hidden_layer,
-                                                                                        biases_hidden_output,
-                                                                                        error_output)
+            grad_weights_hidden_output = calculate_gradients(hidden_layer, error_output)
 
-            # calculate the gradients for the input-to-hidden layer, propagating the error (d_output) from the output layer
-            # back to the hidden layer
+            # calculate the gradients for the input-to-hidden layer, propagating the error (d_output) from the output
+            # layer back to the hidden layer
             error_hidden = np.dot(error_output, weights_hidden_output.T) * sigmoid_derv(hidden_layer)  # the error in
             # the hidden layer
-            grad_weights_input_hidden, grad_biases_input_hidden = calculate_gradients(input_layer, biases_input_hidden,
-                                                                                      error_hidden)
+            grad_weights_input_hidden = calculate_gradients(input_layer, error_hidden)
 
             weights_hidden_output -= learning_rate * grad_weights_hidden_output  # Update weights between hidden and output layers
-            biases_hidden_output -= learning_rate * grad_biases_hidden_output  # Update biases in the output layer
+            biases_hidden_output -= learning_rate * error_output  # Update biases in the output layer
             weights_input_hidden -= learning_rate * grad_weights_input_hidden  # Update weights between input and hidden layers
-            biases_input_hidden -= learning_rate * grad_biases_input_hidden  # Update biases in the hidden layer
+            biases_input_hidden -= learning_rate * error_hidden  # Update biases in the hidden layer
+
+            i += 1
 
             if epoch == -500:  # Specify the epochs you want to log
-                logging.debug(f"Epoch: {epoch + 1}")
+                logging.debug(f"Epoch: {epoch + 1} Iteration: {i} Learning rate: {learning_rate}")
 
                 logging.debug(f"Input layer: {input_layer}")
                 logging.debug(f"Hidden layer: {hidden_layer}")
@@ -108,9 +107,7 @@ def main():
                 # logging.debug(f"Old weights_hidden_output: {old_weights_hidden_output}")
                 # logging.debug(f"Old biases_hidden_output: {old_biases_hidden_output}")
 
-                logging.debug(f"Biases Gradient hidden-output: {grad_biases_hidden_output}")
                 logging.debug(f"weights Gradient hidden-output: {grad_weights_hidden_output}")
-                logging.debug(f"Biases Gradient input-hidden: {grad_biases_hidden_output}")
                 logging.debug(f"Weights Gradient input-hidden: {grad_weights_hidden_output}")
 
                 logging.debug(f"Updated weights_input_hidden: {weights_input_hidden}")
@@ -135,9 +132,11 @@ def main():
             test_predictions.append(np.argmax(output_layer) + 1)  # +1 cause that is the index not the actual number
 
         accuracy = calculate_accuracy(test_predictions, test_labels)
-        print(f"{epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
-    print(f"Input-Hidden Weights {weights_input_hidden}\n Hidden-Output Weights {weights_hidden_output}\n"
-          f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
+
+        logging.info(f"{epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
+
+    logging.info(f"Input-Hidden Weights {weights_input_hidden}\n Hidden-Output Weights {weights_hidden_output}\n"
+                 f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
 
 
 def sigmoid_derv(in_layer):
@@ -151,12 +150,14 @@ def calculate_accuracy(predictions, labels):
     return accuracy
 
 
-def calculate_gradients(in_layer, in_biases, error):
-    # Backward propagate the error (all of this is magic i have no idea whats going on)
-    grad_weights = np.dot(in_layer, error)  # Gradient of weights between hidden and output layers
-    grad_biases = np.dot(in_biases, error)  # Gradient of biases in the output layer
+def calculate_gradients(in_layer, error):
+    in_layer = np.reshape(in_layer, (1, -1))
+    error = np.reshape(error, (-1, 1))
 
-    return grad_weights, grad_biases
+    # Backward propagate the error (all of this is magic i have no idea whats going on)
+    grad_weights = error @ in_layer  # Gradient of weights between hidden and output layers
+
+    return grad_weights.T
 
 
 def compute_loss(output, expected):
