@@ -154,9 +154,7 @@ def calculate_gradients(in_layer, error):
     in_layer = np.reshape(in_layer, (1, -1))
     error = np.reshape(error, (-1, 1))
 
-    # Backward propagate the error (all of this is magic i have no idea whats going on)
     grad_weights = error @ in_layer  # Gradient of weights between hidden and output layers
-
     return grad_weights.T
 
 
@@ -169,18 +167,7 @@ def forward_propagate(in_layer, weights, biases):
     # basically multiply each element in in_layer with its weight(i.e. connection between the two neurons) and then
     # add on the bias of the neuron
     weighted_input = np.dot(in_layer, weights) + biases
-    return activation(weighted_input)  # pass it thru the activation function (RelU) to get the output of this layer
-
-
-def relu_derivative(inputs):  # Derivative of ReLU activation function i.e. 1 if input > 0 else 0
-    result = np.zeros_like(inputs)
-    for i, inp in enumerate(inputs):
-        if inp >= 0:
-            result[i] = 1
-        else:
-            result[i] = 0
-
-    return inputs
+    return activation(weighted_input)  # pass it thru the activation function (Sigmoid) to get the output of this layer
 
 
 def activation(w_inputs):
