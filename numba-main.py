@@ -3,9 +3,10 @@ from logging.handlers import MemoryHandler, RotatingFileHandler
 
 import numpy as np
 from PIL import Image
+from numba import jit
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+# logging.basicConfig(level=logging.DEBUG)
 log_file = 'logs/log.txt'
 max_log_size = 1024 * 1024 * 50  # 50 MB
 file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=1)
@@ -50,13 +51,14 @@ def main():
 
     num_epochs = 20
     learning_rate = 0.000601
+
     for epoch in range(num_epochs):
         i = 0
         total_loss = 0
 
         for image, label in zip(train_images, train_labels):
             # Make -> forward propagate -> output
-            input_layer = np.array(image)
+            input_layer = np.array(image, dtype=np.float64)
             hidden_layer = forward_propagate(input_layer, weights_input_hidden, biases_input_hidden)
             output_layer = forward_propagate(hidden_layer, weights_hidden_output, biases_hidden_output)
 
@@ -131,7 +133,7 @@ def main():
             # it's the index of the element with the highest confidence (value)
             test_predictions.append(np.argmax(output_layer))
 
-        accuracy = calculate_accuracy(test_predictions, test_labels)
+        accuracy = calculate_accuracy(np.array(test_predictions), test_labels)
 
         logging.info(f"Epoch: {epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
 
@@ -139,10 +141,12 @@ def main():
                  f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
 
 
+@jit(nopython=True)
 def sigmoid_derv(in_layer):
     return in_layer * (1 - in_layer)
 
 
+@jit(nopython=True)
 def calculate_accuracy(predictions, labels):
     correct = np.sum(predictions == labels)  # Count the number of correct predictions
     total = len(predictions)  # Total number of predictions
@@ -150,6 +154,7 @@ def calculate_accuracy(predictions, labels):
     return accuracy
 
 
+@jit(nopython=True)
 def calculate_gradients(in_layer, error):
     in_layer = np.reshape(in_layer, (1, -1))
     error = np.reshape(error, (-1, 1))
@@ -158,20 +163,23 @@ def calculate_gradients(in_layer, error):
     return grad_weights.T
 
 
+@jit(nopython=True)
 def compute_loss(output, expected):
     loss = 1 / len(output) * np.sum((output - expected) ** 2)  # magic calculation (MSE)
     return loss
 
 
+@jit(nopython=True)
 def forward_propagate(in_layer, weights, biases):
     # basically multiply each element in in_layer with its weight(i.e. connection between the two neurons) and then
     # add on the bias of the neuron
-    weighted_input = np.dot(in_layer, weights) + biases
+    weighted_input = np.dot(in_layer.astype(np.float64), weights) + biases
     return activation(weighted_input)  # pass it thru the activation function (Sigmoid) to get the output of this layer
 
 
+@jit(nopython=True)
 def activation(w_inputs):
-    activated = np.empty_like(w_inputs)  # create another array with same shape as w_input
+    activated = np.empty_like(w_inputs, dtype=np.float64)  # create another array with same shape as w_input
 
     w_inputs = np.clip(w_inputs, -709.78, 709.78)  # Clip the values so it doesnt overflow
     activated = 1 / (1 + np.exp(-w_inputs))  # Perform sigmoid function on each input
