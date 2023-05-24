@@ -63,7 +63,7 @@ def main():
             expected_output = np.zeros_like(output_layer)
             expected_output[label] = 1  # Set the target class index to 1
 
-            # Calculate how wrong its ass was in predicting the label
+            # Calculate how wrong its was in predicting the label
             loss = compute_loss(output_layer, expected_output)
             total_loss += loss
 
