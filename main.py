@@ -5,7 +5,7 @@ import numpy as np
 from PIL import Image
 
 # Configure logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 log_file = 'logs/log.txt'
 max_log_size = 1024 * 1024 * 50  # 50 MB
 file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=1)
