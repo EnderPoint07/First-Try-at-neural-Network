@@ -13,7 +13,7 @@ file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=
 memory_handler = MemoryHandler(1024 * 5, flushLevel=logging.ERROR, target=file_handler)
 logging.getLogger().addHandler(memory_handler)
 
-np.random.seed(45)
+np.random.seed(5012)
 
 
 def main():
@@ -55,7 +55,7 @@ def main():
     logging.debug(f"Initial biases_hidden_output: {biases_hidden_output}")
 
     num_epochs = 20
-    learning_rate = 0.000601
+    learning_rate = 0.000483
     for epoch in range(num_epochs):
         i = 0
         total_loss = 0

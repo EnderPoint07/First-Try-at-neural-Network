@@ -55,8 +55,8 @@ def main():
     logging.debug(f"Initial weights_hidden_output: {weights_hidden_output}")
     logging.debug(f"Initial biases_hidden_output: {biases_hidden_output}")
 
-    num_epochs = 1
-    learning_rate = 0.000483  # 95.84% accuracy
+    num_epochs = 50
+    learning_rate = 0.00048
 
     for epoch in range(num_epochs):
         i = 0
@@ -142,6 +142,7 @@ def main():
         accuracy = calculate_accuracy(np.array(test_predictions), test_labels)
 
         logging.info(f"Epoch: {epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
+        if accuracy >= 99.9: break
 
     save_params(weights_input_hidden, weights_hidden_output, biases_input_hidden, biases_hidden_output)
 
