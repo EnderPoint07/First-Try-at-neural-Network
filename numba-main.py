@@ -1,4 +1,5 @@
 import logging
+import os
 from logging.handlers import MemoryHandler, RotatingFileHandler
 
 import numpy as np
@@ -13,7 +14,7 @@ file_handler = RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=
 memory_handler = MemoryHandler(1024 * 5, flushLevel=logging.ERROR, target=file_handler)
 logging.getLogger().addHandler(memory_handler)
 
-np.random.seed(45)
+np.random.seed(5012)
 
 
 def main():
@@ -38,19 +39,24 @@ def main():
     hidden_size = 128
     output_size = 10
 
-    # Initialized Weights and biases for the layers
-    weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
-    biases_input_hidden = np.random.randn(hidden_size) * 0.01
+    if os.path.isfile('saved_model.npz'):
+        weights_input_hidden, biases_input_hidden, weights_hidden_output, biases_hidden_output = load_params()
+    else:
+        # Initialized Weights and biases for the layers
+        weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
+        biases_input_hidden = np.random.randn(hidden_size) * 0.01
+
+        weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
+        biases_hidden_output = np.random.randn(output_size) * 0.01  # end weights and biases
+
     logging.debug(f"Initial weights_input_hidden: {weights_input_hidden}")
     logging.debug(f"Initial biases_input_hidden: {biases_input_hidden}")
 
-    weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
-    biases_hidden_output = np.random.randn(output_size) * 0.01  # end weights and biases
     logging.debug(f"Initial weights_hidden_output: {weights_hidden_output}")
     logging.debug(f"Initial biases_hidden_output: {biases_hidden_output}")
 
-    num_epochs = 20
-    learning_rate = 0.000601
+    num_epochs = 1
+    learning_rate = 0.000483  # 95.84% accuracy
 
     for epoch in range(num_epochs):
         i = 0
@@ -137,16 +143,30 @@ def main():
 
         logging.info(f"Epoch: {epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
 
-    logging.info(f"Input-Hidden Weights {weights_input_hidden}\n Hidden-Output Weights {weights_hidden_output}\n"
-                 f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
+    save_params(weights_input_hidden, weights_hidden_output, biases_input_hidden, biases_hidden_output)
 
 
-@jit(nopython=True)
+def load_params():
+    with np.load('saved_model.npz') as model:
+        weights_input_hidden = model['wIH']
+        biases_input_hidden = model['bIH']
+        weights_hidden_output = model['wHO']
+        biases_hidden_output = model['bHO']
+
+    return weights_input_hidden, biases_input_hidden, weights_hidden_output, biases_hidden_output
+
+
+def save_params(weights_input_hidden, weights_hidden_output, biases_input_hidden, biases_hidden_output):
+    np.savez('saved_model.npz', wIH=weights_input_hidden, wHO=weights_hidden_output, bIH=biases_input_hidden,
+             bHO=biases_hidden_output)
+
+
+@jit(nopython=True, cache=True)
 def sigmoid_derv(in_layer):
     return in_layer * (1 - in_layer)
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calculate_accuracy(predictions, labels):
     correct = np.sum(predictions == labels)  # Count the number of correct predictions
     total = len(predictions)  # Total number of predictions
@@ -154,7 +174,7 @@ def calculate_accuracy(predictions, labels):
     return accuracy
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def calculate_gradients(in_layer, error):
     in_layer = np.reshape(in_layer, (1, -1))
     error = np.reshape(error, (-1, 1))
@@ -163,13 +183,13 @@ def calculate_gradients(in_layer, error):
     return grad_weights.T
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def compute_loss(output, expected):
     loss = 1 / len(output) * np.sum((output - expected) ** 2)  # magic calculation (MSE)
     return loss
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def forward_propagate(in_layer, weights, biases):
     # basically multiply each element in in_layer with its weight(i.e. connection between the two neurons) and then
     # add on the bias of the neuron
@@ -177,7 +197,7 @@ def forward_propagate(in_layer, weights, biases):
     return activation(weighted_input)  # pass it thru the activation function (Sigmoid) to get the output of this layer
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=True)
 def activation(w_inputs):
     activated = np.empty_like(w_inputs, dtype=np.float64)  # create another array with same shape as w_input
 

@@ -1,4 +1,5 @@
 import logging
+import os
 from logging.handlers import MemoryHandler, RotatingFileHandler
 
 import numpy as np
@@ -37,14 +38,19 @@ def main():
     hidden_size = 128
     output_size = 10
 
-    # Initialized Weights and biases for the layers
-    weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
-    biases_input_hidden = np.random.randn(hidden_size) * 0.01
+    if os.path.isfile('saved_model.npz'):
+        weights_input_hidden, biases_input_hidden, weights_hidden_output, biases_hidden_output = load_params()
+    else:
+        # Initialized Weights and biases for the layers
+        weights_input_hidden = np.random.randn(input_size, hidden_size) * np.sqrt(2 / (input_size + hidden_size))
+        biases_input_hidden = np.random.randn(hidden_size) * 0.01
+
+        weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
+        biases_hidden_output = np.random.randn(output_size) * 0.01  # end weights and biases
+
     logging.debug(f"Initial weights_input_hidden: {weights_input_hidden}")
     logging.debug(f"Initial biases_input_hidden: {biases_input_hidden}")
 
-    weights_hidden_output = np.random.randn(hidden_size, output_size) * np.sqrt(2 / (hidden_size + output_size))
-    biases_hidden_output = np.random.randn(output_size) * 0.01  # end weights and biases
     logging.debug(f"Initial weights_hidden_output: {weights_hidden_output}")
     logging.debug(f"Initial biases_hidden_output: {biases_hidden_output}")
 
@@ -135,8 +141,22 @@ def main():
 
         logging.info(f"Epoch: {epoch + 1}/{num_epochs}: avg Loss: {average_loss}, accuracy: {accuracy}%")
 
-    logging.info(f"Input-Hidden Weights {weights_input_hidden}\n Hidden-Output Weights {weights_hidden_output}\n"
-                 f" Input-Hidden Biases {biases_input_hidden}\n Hidden-Output Biases{biases_hidden_output}")
+    save_params(weights_input_hidden, weights_hidden_output, biases_input_hidden, biases_hidden_output)
+
+
+def load_params():
+    with np.load('saved_model.npz') as model:
+        weights_input_hidden = model['wIH']
+        biases_input_hidden = model['bIH']
+        weights_hidden_output = model['wHO']
+        biases_hidden_output = model['bHO']
+
+    return weights_input_hidden, biases_input_hidden, weights_hidden_output, biases_hidden_output
+
+
+def save_params(weights_input_hidden, weights_hidden_output, biases_input_hidden, biases_hidden_output):
+    np.savez('saved_model.npz', wIH=weights_input_hidden, wHO=weights_hidden_output, bIH=biases_input_hidden,
+             bHO=biases_hidden_output)
 
 
 def sigmoid_derv(in_layer):
