@@ -180,7 +180,7 @@ def calculate_gradients(in_layer, error):
     in_layer = np.reshape(in_layer, (1, -1))
     error = np.reshape(error, (-1, 1))
 
-    grad_weights = error @ in_layer  # Gradient of weights between hidden and output layers
+    grad_weights = np.dot(error, in_layer)  # Gradient of weights between hidden and output layers
     return grad_weights.T
 
 

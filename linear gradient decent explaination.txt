@@ -1,0 +1,34 @@
+Gradient decent:
+credit: https://towardsdatascience.com/gradient-descent-from-scratch-e8b75fa986cc
+Note: This only really works for linear regression
+
+    truth = expected_output
+    pred = output_layer
+    x can be taken as the input of the layer
+                
+    error = 1/10 (truth - pred)^2 <- Mean Squared
+    since pred = x * w + b, error = 1/10 (truth - (x * w + b))^2
+                
+    gradient decent formula for weights: w_new = w_old - learning_rate * dError/dw_old
+    gradient decent formula for biases: b_new = b_old - learning_rate * dError/dw_old
+
+    First we take the partial derivative of error w.r.t w:
+        i.e, dError/dw = d/dw (1/10 (truth - (x * w + b))^2)
+        we can ignore the constants for now so we just take the derivative of error w.r.t w
+        which is, dError/dw = d/dw ((truth - (x * w + b))^2)
+                    
+        using chain rule, we first take the derivative of the outside function (...)^2 which is 2(...) 
+            keeping the inside function as is. 
+        so it becomes 2(truth - (x * w + b)) * d/dw (truth - (x * w + b))
+        which is, 2(truth - (x * w + b)) * (0 - (x * 1 + 0)
+        i.e, 2(truth - (x * w + b)) * -x
+        therefore, dError/dw = -2/10 * x (truth - (x * w + b))
+                
+    Now we do the same but w.r.t b:
+        dError/db = d/db (truth - (x * w + b))^2)
+        dError/db = d/db ((...)^2) * d/db (truth - (x * w + b)) <- chain rule
+        dError/db = 2(truth - (x * w + b)) * (0 - (0 + 1))
+        dError/db = 2(truth - (x * w + b)) * -1
+        dError/db = -2/10 (truth - (x * w + b))
+                
+Now we can just plug that into the formula for gradient decent.
