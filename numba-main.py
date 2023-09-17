@@ -205,7 +205,7 @@ def activation(w_inputs):
     w_inputs = np.clip(w_inputs, -709.78, 709.78)  # Clip the values so it doesnt overflow
     activated = 1 / (1 + np.exp(-w_inputs))  # Perform sigmoid function on each input
 
-    return activated  # normalize the value
+    return activated 
 
 
 def resize_images(images, new_size):  # magic again

@@ -1,0 +1,134 @@
+# The cost/error of the two layers.
+
+Let the input layer be 'x'.
+Let the truth value be 'ŷ'.
+
+Let the sigmoid activation function be A(x) = 1/(1 + exp(-x))
+Let the cost function be C(ŷ, y) = -(ŷ * log(y))
+
+
+hidden layer(z1) = w1 * x + b1
+Activated output of the hidden layer(y1) = A(z1) = A(w1 * x + b1)
+output layer(z2) = w2 * y1 + b2
+Activated output of the output layer(y2) = A(z2) = A(w2 * y1 + b2)
+
+A'(x) = A(x) * (1 - A(x))
+
+Let error in y2 be 'c2' = C(ŷ, y2) = -(ŷ * log(y2)) = -(ŷ * log(A(w2 * y1 + b2)))
+Let error in y1 be 'c1' = dc2/dy1 = d/dy1 [C(ŷ, y2)]
+                       = d/dy1 [-(ŷ * log(y2))]
+                       = d/dy1 [-(ŷ * log(A(w2 * y1 + b2)))]    
+                       = -ŷ (d/dy1 [log(A(w2 * y1 + b2))])
+[Chain Rule]           = -ŷ (d/y2 [log(y2)] * d/y1 [y2])  ... where 'y2' is the inner function  A(w2 * y1 + b2)
+                       = -ŷ (1/y2 * d/y1 [A(w2 * y1 + b2)])
+                       = -ŷ/y2 (d/y1 [A(w2 * y1 + b2)])
+[Chain Rule]           = -ŷ/y2 (d/z2 [A(z2)] * d/y1 [z2]) ... where 'z2' is the inner funct (w2 * y1 + b2)
+                       = -ŷ/y2 (A'(z2) * d/y1 [z2])
+                       = -ŷ * A'(z2)/y2 (d/y1 [z2])
+                       = -ŷ * A'(z2)/y2 (d/y1 [w2 * y1 + b2])
+                       = -ŷ * A'(z2)/y2 ([w2 * 1 + 0])
+                       = -ŷ * A'(z2)/y2 * w2
+                       = -ŷ * w2 * A'(z2)/y2
+                       = -ŷ * w2 * A'(z2)/y2
+therefore c1 = -ŷ * w2 * A'(z2)/y2
+             = -ŷ * w2 * [A(z2) * (1 - A(z2))]/A(z2)
+             = -ŷ * w2 * (1 - y2)
+
+
+# Gradient Decent
+
+gradient decent formula for weights: w_new = w_old - learning_rate * dC/dw_old
+gradient decent formula for biases: b_new = b_old - learning_rate * dC/db_old
+
+for the output layer: w2_new = w2 - learning_rate * dc2/dw2
+
+dc2/dw2 = d/dw2 [-(ŷ * log(y2))]
+       = d/dw2 [-(ŷ * log(A(w2 * y1 + b2)))]
+       = -ŷ * d/dw2 [log(A(w2 * y1 + b2))]
+       = -ŷ * d/dy2 [log(y2)] * d/dw2 [y2] ... chain rule figure it out
+       = -ŷ * 1/dy2 * d/dw2 [A(w2 * y1 + b2)]
+       = -ŷ/y2 * d/dz2 [A(z2)] * d/dw2 [z2] ... chain rule figure it out
+       = -ŷ/y2 * A'(z2) * d/dw2 [w2 * y1 + b2]
+       = -ŷ/y2 * A'(z2) * [1 * y1 + 0]
+       = -ŷ/y2 * A'(z2) * y1
+       = -ŷ * y1 * A'(z2)/y2
+
+Since A'(x) = A(x) * (1 - A(x)) and y2 = A(z2),
+          -ŷ * y1 * A'(z2)/y2
+        = -ŷ * y1 * [A(z2) * (1 - A(z2))]/A(z2)
+        = -ŷ * y1 * (1 - A(z2))
+        = -ŷ * y1 * (1 - y2)
+
+
+
+Biases for the output layer: b_new = b2 - learning_rate * dc2/db2
+dc2/db2 = d/db2 [-(ŷ * log(y2))]
+        = -ŷ/y2 * A'(z2) * d/db2 [w2 * y1 + b2]   ... refer to the calculation for the updated weights
+        = -ŷ/y2 * A'(z2) * [0 * 0 + 1]
+        = -ŷ/y2 * A'(z2)
+        = -ŷ/y2 * A(z2) * (1 - A(z2))
+        = -ŷ/y2 * y2 * (1 - y2)
+        = -ŷ * (1 - y2)
+
+
+For the hidden layer: w1_new = w1 - learning_rate * dc1/dw1
+
+dc1/dw1 = d/dw1 [-ŷ * w2 * (1 - y2)]
+        = d/dw1 [-ŷ * w2 * (1 - y2)]
+        = -ŷ * w2 * d/dw1 [(1 - y2)]
+        = -ŷ * w2 * (d/dw1 [1] - d/dw1 [y2]) ... sum rule
+        = -ŷ * w2 * (0 - d/dw1 [y2])
+Lets focus on d/dw1 [y2]:
+        dy2/dw1 = d/dw1 [A(w2 * y1 + b2)]
+                = A'(w2 * y1 + b2) * d/dw1 [w2 * y1 + b2]
+                = A'(z2) * d/dw1 [w2 * y1 + b2]
+                = A'(z2) * d/dw1 [w2 * y1] + d/dw1 [b2] .. sum rule
+                = A'(z2) * d/dw1 [w2 * y1] + 0
+                = A'(z2) * w2 * d/dw1 [A(w1 * x + b1)]
+                = A'(z2) * w2 * [A'(w1 * x + b1) * d/dw1 [w1 * x + b1]]
+                = A'(z2) * w2 * A'(z1) * d/dw1 [w1 * x + b1]
+                = A'(z2) * w2 * A'(z1) * d/dw1 [1 * x + 0]
+                = A'(z2) * w2 * A'(z1) * x
+
+        d/dw1 [y2] = A'(z2) * w2 * A'(z1) * x
+Therefore, dc1/dw1 = -ŷ * w2 * (0 - [A'(z2) * w2 * A'(z1) * x])
+                   = -ŷ * w2 * -[A'(z2) * w2 * A'(z1) * x]
+                   = ŷ * w2 * A'(z2) * w2 * A'(z1) * x
+                   = ŷ * w2^2 * A'(z2) * A'(z1) * x
+
+  ŷ * w2^2 * A'(z2) * A'(z1) * x
+= ŷ * w2^2 * y2 * (1 - y2) * y1 * (1 - y1) * x
+= y2 * (1 - y2) * y1 * (1 - y1) * w2^2 * ŷ * x
+= (y2 - y2^2) (y1 - y1^2) * w2^2 * ŷ * x
+
+Biases for the hidden layer: b_new = b1 - learning_rate * dc1/db1
+dc1/db1 = d/db1 [-ŷ * w2 * (1 - y2)]
+        = -ŷ * w2 * (0 - d/db1 [y2])
+
+        d/db1 [y2] = A'(z2) * w2 * A'(z1) * d/db1 [w1 * x + b1]
+                = A'(z2) * w2 * A'(z1) * [0 * 0 + 1]
+                = A'(z2) * w2 * A'(z1) * 1
+                = A'(z2) * w2 * A'(z1)
+therefore, dc1/db1 = -ŷ * w2 * (0 - A'(z2) * w2 * A'(z1))
+                   = -ŷ * w2 * (-A'(z2) * w2 * A'(z1))
+                   = -ŷ * w2 * -A'(z2) * w2 * A'(z1)
+                   = ŷ * w2 * A'(z2) * w2 * A'(z1)
+                   = ŷ * w2^2 * A'(z2) * A'(z1)
+
+  ŷ * w2^2 * A'(z2) * A'(z1)
+= ŷ * w2^2 * A(z2) * (1 - A(z2)) * A(z1) * (1 - A(z1))
+= ŷ * w2^2 * y2 * (1 - y2) * y1 * (1 - y1)
+= (y2 - y2^2) (y1 - y1^2) * ŷ * w2^2 
+
+
+
+
+Therefore the updated:
+                    weights for the output layer = w2 - learning_rate * [-ŷ * y1 * (1 - y2)]
+                    biases for the output layer = -ŷ/y2 * A'(z2)
+
+                    weights for the hidden layer = w1 - learning_rate * [(y2 - y2^2) (y1 - y1^2) * ŷ * w2^2 * x]
+                    biases for the hidden layer = b1 - learning_rate * [(y2 - y2^2) (y1 - y1^2) * ŷ * w2^2]
+
+
+

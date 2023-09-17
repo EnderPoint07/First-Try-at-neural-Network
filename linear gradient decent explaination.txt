@@ -6,11 +6,11 @@ Note: This only really works for linear regression
     pred = output_layer
     x can be taken as the input of the layer
                 
-    error = 1/10 (truth - pred)^2 <- Mean Squared
+    error = 1/10 (truth - pred)^2 <- Mean Squared Error
     since pred = x * w + b, error = 1/10 (truth - (x * w + b))^2
                 
     gradient decent formula for weights: w_new = w_old - learning_rate * dError/dw_old
-    gradient decent formula for biases: b_new = b_old - learning_rate * dError/dw_old
+    gradient decent formula for biases: b_new = b_old - learning_rate * dError/db_old
 
     First we take the partial derivative of error w.r.t w:
         i.e, dError/dw = d/dw (1/10 (truth - (x * w + b))^2)
@@ -23,6 +23,7 @@ Note: This only really works for linear regression
         which is, 2(truth - (x * w + b)) * (0 - (x * 1 + 0)
         i.e, 2(truth - (x * w + b)) * -x
         therefore, dError/dw = -2/10 * x (truth - (x * w + b))
+        it also means, dError/dw = -1/5 * x (truth - pred)
                 
     Now we do the same but w.r.t b:
         dError/db = d/db (truth - (x * w + b))^2)
